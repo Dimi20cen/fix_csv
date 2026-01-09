@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CSV Cleaner • csv.dimy.dev</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Clean and normalize CSV files entirely in your browser." />
+
+  <!-- Tailwind CDN (no build step) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+  <div class="w-full max-w-6xl mx-auto">
+    <!-- Top branding / minimal logo -->
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div
+          class="h-9 w-9 rounded-2xl bg-brand-500/10 border border-brand-500/50 flex items-center justify-center text-[11px] font-semibold tracking-tight"
+        >
+          CSV
+        </div>
+        <div>
+          <h1 class="text-lg font-semibold tracking-tight">csv.dimy.dev</h1>
+          <p class="text-xs text-slate-400">Clean messy CSVs, right in your browser.</p>
+        </div>
+      </div>
+      <span class="hidden sm:inline text-[11px] text-slate-500">
+        Frontend-only · Runs locally · No uploads
+      </span>
+    </header>
+
+    <!-- Main card -->
+    <main
+      class="bg-slate-900/70 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur-sm p-4 md:p-6 space-y-5"
+    >
+      <!-- File upload + actions -->
+      <section class="flex flex-col md:flex-row gap-4 md:items-end">
+        <div class="flex-1 space-y-2">
+          <label for="fileInput" class="block text-sm font-medium text-slate-200">
+            1. Upload CSV file
+          </label>
+          <input
+            id="fileInput"
+            type="file"
+            accept=".csv,text/csv"
+            class="block w-full text-sm text-slate-200
+                   file:mr-4 file:py-2 file:px-4
+                   file:rounded-xl file:border-0
+                   file:text-sm file:font-medium
+                   file:bg-brand-500/10 file:text-brand-200
+                   hover:file:bg-brand-500/20
+                   cursor-pointer"
+          />
+          <p id="fileInfo" class="text-xs text-slate-400 mt-1">
+            No file selected.
+          </p>
+        </div>
+
+        <div class="flex gap-2 md:justify-end">
+          <button
+            id="cleanButton"
+            type="button"
+            class="inline-flex items-center justify-center px-4 py-2 rounded-xl
+                   text-sm font-medium
+                   bg-brand-500 hover:bg-brand-600
+                   disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed
+                   transition-colors whitespace-nowrap"
+            disabled
+          >
+            Clean CSV
+          </button>
+          <button
+            id="downloadButton"
+            type="button"
+            class="inline-flex items-center justify-center px-4 py-2 rounded-xl
+                   text-sm font-medium
+                   border border-slate-700 text-slate-200
+                   hover:bg-slate-800
+                   disabled:border-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed
+                   transition-colors whitespace-nowrap"
+            disabled
+          >
+            Download cleaned
+          </button>
+        </div>
+      </section>
+
+      <!-- Options + messages -->
+      <section class="grid md:grid-cols-2 gap-4">
+        <!-- Cleaning options -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-slate-200">2. Cleaning options</h2>
+            <button
+              id="resetOptionsButton"
+              type="button"
+              class="text-[11px] text-slate-400 hover:text-slate-200 underline decoration-dotted"
+            >
+              Reset to defaults
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <!-- Each checkbox is optional & can be toggled -->
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input
+                id="optionTrim"
+                type="checkbox"
+                class="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-900 text-brand-500"
+                checked
+              />
+              <span>
+                Trim whitespace
+                <span class="block text-[11px] text-slate-400">
+                  Remove leading/trailing spaces in every cell.
+                </span>
+              </span>
+            </label>
+
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input
+                id="optionRemoveEmpty"
+                type="checkbox"
+                class="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-900 text-brand-500"
+                checked
+              />
+              <span>
+                Remove empty rows
+                <span class="block text-[11px] text-slate-400">
+                  Drop rows with no data in any column.
+                </span>
+              </span>
+            </label>
+
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input
+                id="optionFixColumns"
+                type="checkbox"
+                class="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-900 text-brand-500"
+                checked
+              />
+              <span>
+                Fix inconsistent columns
+                <span class="block text-[11px] text-slate-400">
+                  Trim extra cells, pad missing with empty values.
+                </span>
+              </span>
+            </label>
+
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input
+                id="optionDeduplicate"
+                type="checkbox"
+                class="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-900 text-brand-500"
+              />
+              <span>
+                Deduplicate rows
+                <span class="block text-[11px] text-slate-400">
+                  Keep the first occurrence, remove exact duplicates.
+                </span>
+              </span>
+            </label>
+
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input
+                id="optionNormalizeHeader"
+                type="checkbox"
+                class="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-900 text-brand-500"
+                checked
+              />
+              <span>
+                Normalize header row
+                <span class="block text-[11px] text-slate-400">
+                  Lowercase, trim, spaces &amp; symbols → <code>underscores</code>.
+                </span>
+              </span>
+            </label>
+
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input
+                id="optionNormalizeFormat"
+                type="checkbox"
+                class="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-900 text-brand-500"
+                checked
+              />
+              <span>
+                Normalize CSV format
+                <span class="block text-[11px] text-slate-400">
+                  Force comma delimiter + <code>\r\n</code> line endings.
+                </span>
+              </span>
+            </label>
+
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input
+                id="optionConsistentQuotes"
+                type="checkbox"
+                class="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-900 text-brand-500"
+                checked
+              />
+              <span>
+                Consistent quoting
+                <span class="block text-[11px] text-slate-400">
+                  Standard double quotes around cells when needed.
+                </span>
+              </span>
+            </label>
+
+            <label class="inline-flex items-start gap-2 cursor-pointer">
+              <input
+                id="optionEncodingFix"
+                type="checkbox"
+                class="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-900 text-brand-500"
+                checked
+              />
+              <span>
+                Encoding &amp; BOM cleanup
+                <span class="block text-[11px] text-slate-400">
+                  Best-effort encoding detection, strip input BOM, add UTF-8 BOM on export.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <div
+            id="statsBox"
+            class="text-[11px] text-slate-300 bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 mt-1 hidden"
+          ></div>
+        </div>
+
+        <!-- Status / error messages -->
+        <div class="space-y-2">
+          <h2 class="text-sm font-semibold text-slate-200">Status</h2>
+
+          <div
+            id="errorBox"
+            class="hidden rounded-xl border border-red-500/40 bg-red-950/50 text-red-100 text-xs p-3"
+          ></div>
+
+          <div
+            id="statusBox"
+            class="rounded-xl border border-emerald-500/30 bg-emerald-950/40 text-emerald-100 text-xs p-3 flex items-start gap-2"
+          >
+            <div class="mt-[2px] h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></div>
+            <div id="statusText">
+              Waiting for file upload.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Preview table -->
+      <section class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-slate-200">3. Preview (first 50 rows)</h2>
+          <span id="previewMeta" class="text-[11px] text-slate-400">
+            No data loaded.
+          </span>
+        </div>
+
+        <div class="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/40">
+          <div class="max-h-80 overflow-auto text-xs leading-tight preview-scroll">
+            <table class="min-w-full border-collapse text-left">
+              <thead class="bg-slate-900 sticky top-0 z-10">
+                <tr id="previewHead"></tr>
+              </thead>
+              <tbody id="previewBody" class="divide-y divide-slate-800"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- PapaParse CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
